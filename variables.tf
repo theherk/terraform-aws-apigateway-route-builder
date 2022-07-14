@@ -13,7 +13,7 @@ variable "generate_base_proxies" {
     {
       path    = "/v1/{proxy+}"
       methods = ["ANY"]
-      config  = { integration = { uri = "example.com/v1/{proxy}" } }
+      config  = { uri = "example.com/v1/{proxy}"
     },
     ```
 
@@ -23,7 +23,7 @@ variable "generate_base_proxies" {
     {
       path    = "/v1"
       methods = ["ANY"]
-      config  = { integration = { uri = "example.com/v1" } }
+      config  = { uri = "example.com/v1" }
     },
     ```
 
@@ -38,6 +38,6 @@ variable "routes" {
   type = list(object({
     path    = string
     methods = list(string)
-    config  = map(any)
+    config  = any
   }))
 }

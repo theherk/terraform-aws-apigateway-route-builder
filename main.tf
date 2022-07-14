@@ -1,7 +1,7 @@
 locals {
   http_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
 
-  # Process routes into a suitable data structure for this module.
+  # Process routes into a suitable data structure for api resources.
   # For each route, ensure ANY is expanded if an authorizer is in use.
   # Trim paths, identify final path part, and identify predecessors.
   routes_processed = [for r in var.routes : {
@@ -20,19 +20,19 @@ locals {
   # {
   #   path    = "/v1/{proxy+}"
   #   methods = ["ANY"]
-  #   config  = { integration = { uri = "example.com/v1/{proxy}" } }
+  #   config  = { uri = "example.com/v1/{proxy}" }
   # },
   # and no other routes are given with path "/v1" and url "example.com",
   # then a default base proxy path should be created, such as:
   # {
   #   path    = "/v1"
   #   methods = ["ANY"]
-  #   config  = { integration = { uri = "example.com/v1" } }
+  #   config  = { uri = "example.com/v1" }
   # },
   # If the preceding statement is not true, then this assumes your
   # explicit configuration is correct.
   default_base_proxies = !var.generate_base_proxies ? [] : [for r in local.routes_processed : {
-    config       = merge(r.config, { integration = { uri = trim(split("{proxy}", trim(r.config.integration.uri, "/"))[0], "/") } })
+    config       = merge(r.config, { uri = trim(split("{proxy}", trim(lookup(r.config, "url", ""), "/"))[0], "/") })
     methods      = r.methods
     path         = length(r.predecessors) > 0 ? join("/", slice(r.predecessors, 0, length(r.predecessors) - 1)) : ""
     path_part    = length(r.predecessors) > 0 ? r.predecessors[length(r.predecessors) - 1] : ""
@@ -40,7 +40,7 @@ locals {
     resource_key = join("|", [length(r.predecessors) > 0 ? length(r.predecessors) - 1 : 0, join("/", slice(r.predecessors, 0, length(r.predecessors)))])
     } if alltrue([
       length(split("{proxy+}", r.path)) == 2,
-      length(split("{proxy}", lookup(lookup(r.config, "integration", {}), "uri", "") != "" ? trim(r.config.integration.uri, "/") : "")) == 2,
+      length(split("{proxy}", lookup(r.config, "uri", "") != "" ? trim(lookup(r.config, "url", ""), "/") : "")) == 2,
     ])
   ]
 
