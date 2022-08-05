@@ -32,7 +32,7 @@ locals {
   # If the preceding statement is not true, then this assumes your
   # explicit configuration is correct.
   default_base_proxies = !var.generate_base_proxies ? [] : [for r in local.routes_processed : {
-    config       = merge(r.config, { uri = trim(split("{proxy}", trim(lookup(r.config, "url", ""), "/"))[0], "/") })
+    config       = merge(r.config, { uri = trim(split("{proxy}", trim(lookup(r.config, "uri", ""), "/"))[0], "/") })
     methods      = r.methods
     path         = length(r.predecessors) > 0 ? join("/", slice(r.predecessors, 0, length(r.predecessors) - 1)) : ""
     path_part    = length(r.predecessors) > 0 ? r.predecessors[length(r.predecessors) - 1] : ""
@@ -40,7 +40,7 @@ locals {
     resource_key = join("|", [length(r.predecessors) > 0 ? length(r.predecessors) - 1 : 0, join("/", slice(r.predecessors, 0, length(r.predecessors)))])
     } if alltrue([
       length(split("{proxy+}", r.path)) == 2,
-      length(split("{proxy}", lookup(r.config, "uri", "") != "" ? trim(lookup(r.config, "url", ""), "/") : "")) == 2,
+      length(split("{proxy}", lookup(r.config, "uri", "") != "" ? trim(lookup(r.config, "uri", ""), "/") : "")) == 2,
     ])
   ]
 
