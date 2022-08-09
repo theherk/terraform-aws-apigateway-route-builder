@@ -63,7 +63,7 @@ locals {
 
   # Build an object of resources keyed by the route's depth and path, and
   # containing: depth, parent_key, path_part.
-  resources = { for k in distinct([for r in local.routes : r.resource_key]) : k => [
+  resources_distinct = { for k in distinct([for r in local.routes : r.resource_key]) : k => [
     for r in local.routes : {
       path_part = r.path_part
 
@@ -74,6 +74,12 @@ locals {
       )
     } if r.resource_key == k][0]
   }
+
+  # Strip resources for which the path_part is empty.
+  # You can't create a resources without a path_part; that would be
+  # equivelent to the api root itself, but they are created as a
+  # byproduct of our processing, so this removes them.
+  resources = { for k, r in local.resources_distinct : k => r if r.path_part != "" }
 
   # All resource methods, including overlap.
   # So including those specified explicitly and those generated as base
@@ -90,7 +96,7 @@ locals {
         depth        = length(r.predecessors)
         key          = join("|", [r.resource_key, m])
         method       = m
-        resource_key = r.resource_key
+        resource_key = length(r.predecessors) == 0 && length(r.path_part) == 0 ? null : r.resource_key
         root         = length(r.predecessors) == 0 && length(r.path_part) == 0
       }
     ]
