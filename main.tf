@@ -53,7 +53,7 @@ locals {
     methods      = []
     path         = join("/", slice(r.predecessors, 0, i + 1))
     path_part    = r.predecessors[i]
-    predecessors = i > 0 ? slice(r.predecessors, i - 1, i) : []
+    predecessors = slice(r.predecessors, 0, i)
     resource_key = join("|", [i, join("/", slice(r.predecessors, 0, i + 1))])
   }]])
 
